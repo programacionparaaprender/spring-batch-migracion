@@ -7,8 +7,8 @@
 
 
 ###
->- OutputFiles=C:\\Users\\luis1\\Documents\\htdocs\\telefonica\\spring-batch\\OutputFiles
->- inputFileXml=C:\\Users\\luis1\\Documents\\htdocs\\telefonica\\spring-batch\\inputFiles\\students.xml
+>- OutputFiles=C:\\Users\\luis1\\Documents\\htdocs\\telefonica\\spring-batch-migracion\\OutputFiles
+>- inputFileXml=C:\\Users\\luis1\\Documents\\htdocs\\telefonica\\spring-batch-migracion\\inputFiles\\students.xml
 
 ### pendiente corregir error java.lang.IllegalArgumentException: jdbcUrl is required with driverClassName.
 >- https://stackoverflow.com/questions/56100898/jdbcurl-is-required-with-driverclassname
@@ -16,4 +16,4 @@
 ### al agregar un nuevo job una vez colocar base de datos en create
 
 ### argumentos
->- maxItemCount=2 currentItemCount=1 inputFile=C:/Users/luis1/Documents/htdocs/telefonica/spring-batch-1/inputFiles/students.csv currentItemCount=0 maxItemCount=10000
+>- maxItemCount=2 currentItemCount=1 inputFile=C:/Users/luis1/Documents/htdocs/telefonica/spring-batch-migracion/inputFiles/students.csv currentItemCount=0 maxItemCount=10000
