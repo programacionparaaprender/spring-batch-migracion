@@ -3,6 +3,7 @@ package com.programacionparaaprender.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.oxm.jaxb.Jaxb2Marshaller;
@@ -55,8 +56,11 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
+import org.springframework.batch.core.step.builder.SimpleStepBuilder;
 import org.springframework.batch.core.step.skip.AlwaysSkipItemSkipPolicy;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.adapter.ItemReaderAdapter;
 import org.springframework.batch.item.adapter.ItemWriterAdapter;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
@@ -87,6 +91,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.batch.integration.async.AsyncItemProcessor;
+import org.springframework.batch.integration.async.AsyncItemWriter;
 
 @Configuration
 public class SampleJob {
@@ -255,9 +261,9 @@ public class SampleJob {
 				.build();
 	}
 	
-	private Step firstChunkStep() {
+	private Step firstChunkStepAntiguo() {
 		return stepBuilderFactory.get("First Chunk Step")
-				.<com.programacionparaaprender.postgresql.entity.Student, com.programacionparaaprender.mysql.entity.Student>chunk(3)
+				.<com.programacionparaaprender.postgresql.entity.Student, com.programacionparaaprender.mysql.entity.Student>chunk(500)
 				.reader(jpaCursorItemReader(null, null))
 				.processor(firstItemProcessorPosMysql)
 				.writer(jpaItemWriter())
@@ -273,6 +279,44 @@ public class SampleJob {
 				.transactionManager(jpaTransactionManager)
 				.build();
 	}
+	
+	private Step firstChunkStep() {
+		return ((SimpleStepBuilder<Student, com.programacionparaaprender.mysql.entity.Student>) stepBuilderFactory.get("First Chunk Step")
+				.<com.programacionparaaprender.postgresql.entity.Student, com.programacionparaaprender.mysql.entity.Student>chunk(500)
+				.reader(jpaCursorItemReader(null, null))
+				.processor((ItemProcessor) asyncProcessorPosMysql())
+				.writer((ItemWriter)asyncJpaItemWriter())
+				.faultTolerant()
+				.skip(Throwable.class)
+				//.skip(NullPointerException.class)
+				.skipLimit(100)
+				//.skipPolicy(new AlwaysSkipItemSkipPolicy())
+				.retryLimit(3)
+				.retry(Throwable.class)
+				//.listener(skipListener)
+				.listener(skipListenerImpl)
+				.transactionManager(jpaTransactionManager))
+				.build();
+	}
+	
+	@Bean
+    public AsyncItemWriter<com.programacionparaaprender.mysql.entity.Student> asyncJpaItemWriter() {
+        AsyncItemWriter<com.programacionparaaprender.mysql.entity.Student> asyncItemWriter = new AsyncItemWriter<>();
+        asyncItemWriter.setDelegate(jpaItemWriter());
+        return asyncItemWriter;
+    }
+	
+	@Bean
+    public AsyncItemProcessor<com.programacionparaaprender.postgresql.entity.Student, com.programacionparaaprender.mysql.entity.Student> 
+	asyncProcessorPosMysql() {
+        SimpleAsyncTaskExecutor task = new SimpleAsyncTaskExecutor();
+        task.setConcurrencyLimit(30);
+        task.setThreadNamePrefix("Z");
+        AsyncItemProcessor<com.programacionparaaprender.postgresql.entity.Student, com.programacionparaaprender.mysql.entity.Student> asyncItemProcessor = new AsyncItemProcessor<>();
+        asyncItemProcessor.setDelegate(firstItemProcessorPosMysql);
+        asyncItemProcessor.setTaskExecutor(task);
+        return asyncItemProcessor;
+    }
 	
 	
 	
