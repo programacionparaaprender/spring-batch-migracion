@@ -310,7 +310,7 @@ public class SampleJob {
     public AsyncItemProcessor<com.programacionparaaprender.postgresql.entity.Student, com.programacionparaaprender.mysql.entity.Student> 
 	asyncProcessorPosMysql() {
         SimpleAsyncTaskExecutor task = new SimpleAsyncTaskExecutor();
-        task.setConcurrencyLimit(30);
+        task.setConcurrencyLimit(20);
         task.setThreadNamePrefix("Z");
         AsyncItemProcessor<com.programacionparaaprender.postgresql.entity.Student, com.programacionparaaprender.mysql.entity.Student> asyncItemProcessor = new AsyncItemProcessor<>();
         asyncItemProcessor.setDelegate(firstItemProcessorPosMysql);
